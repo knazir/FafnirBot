@@ -1,5 +1,5 @@
 module.exports = {
-  COMMAND_PREFIX: "?",
+  COMMAND_PREFIX: ":",
   OPTION_PREFIX: "--",
 
   BG_IMG_URL: "https://i.imgur.com/dL7979f.png",
