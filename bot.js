@@ -39,6 +39,8 @@ function handleCommand(msg) {
   const command = msg.content.substring(config.COMMAND_PREFIX.length).split(" ")[0];
   if (command === "test") {
     test(msg);
+  } else if (command === "ping") {
+    msg.reply(`${msg.author} pong! I am currently up and running.`);
   }
 }
 
