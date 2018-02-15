@@ -40,7 +40,7 @@ function handleCommand(msg) {
   if (command === "test") {
     test(msg);
   } else if (command === "ping") {
-    msg.reply(`${msg.author} pong! I am currently up and running.`);
+    msg.reply(`pong! I am currently up and running.`);
   }
 }
 
