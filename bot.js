@@ -166,6 +166,7 @@ function handleBossCarries(msg) {
 //////////////////// Handlers ////////////////////
 
 function ready() {
+  bot.user.setActivity(config.ACTIVITY_MESSAGE);
   welcomeChannel = bot.channels.get(config.WELCOME_CHANNEL_ID);
   goodbyeChannel = bot.channels.get(config.GOODBYE_CHANNEL_ID);
   testChannel = bot.channels.get(config.TEST_CHANNEL_ID);

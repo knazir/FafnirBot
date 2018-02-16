@@ -1,9 +1,12 @@
 module.exports = {
+  // commands
   COMMAND_PREFIX: "!",
   OPTION_PREFIX: "--",
 
   // media
   BG_IMG_URL: "https://i.imgur.com/dL7979f.png",
+
+  // roles
 
   // channels
   WELCOME_CHANNEL_ID: "398691402139172864",
@@ -36,5 +39,9 @@ module.exports = {
     hmag: "Hard Magnus",
     hellux: "Hell Gollux",
     hhilla: "Hard Hilla"
-  }
+  },
+
+  // misc
+  STATUS: "online",
+  ACTIVITY_MESSAGE: "Fafnir #1"
 };
