@@ -27,6 +27,7 @@
   "dependencies": {
     "discord.js": "^11.3.0",
     "dotenv": "^5.0.0",
+    "google-spreadsheet": "^2.0.4",
     "node-fetch": "^2.0.0",
     "nodemon": "^1.14.12"
   },
