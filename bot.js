@@ -122,11 +122,11 @@ function showBossCarryList(msg) {
 }
 
 function showBossNameList(msg) {
-  let bossNamesList = "```";
+  let bossNamesList = "```\n";
   Object.keys(config.BOSS_CARRY_BOSS_NAMES).forEach(boss => {
     bossNamesList += `- ${boss} (${config.BOSS_CARRY_BOSS_NAMES[boss]})\n`;
   });
-  bossNamesList += "\n```";
+  bossNamesList += "```";
   msg.channel.send(
     "The current supported boss names are (case insensitive):\n" +
     `${bossNamesList}\n` +
