@@ -11,6 +11,8 @@ module.exports = {
   WELCOME_MESSAGE: "Please tag Eagle or one of the online Fafnir members and tell us your IGN. " +
   "**Failure to complete this instruction will result in a kick from the server!**",
 
+  GOODBYE_MESSAGES: ["Cya nerd. :^)", "Later loser.", "Don't let the door hit you on the way out!", "Bye."],
+
   BOSS_CARRY_SHEET_URL: "https://docs.google.com/spreadsheets/d/1BaPXOM--nfYaWj1pyfQR2fqH72hC3ICEGlq84Rp2LTQ/edit#gid=0",
   BOSS_CARRY_SHEET_ID: "1BaPXOM--nfYaWj1pyfQR2fqH72hC3ICEGlq84Rp2LTQ",
   BOSS_CARRY_CARRIES_MAP: {

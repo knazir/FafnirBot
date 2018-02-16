@@ -199,8 +199,12 @@ function welcome(member) {
   welcomeChannel.send(welcomeEmbed);
 }
 
+function getRandomGoodbye() {
+  return config.GOODBYE_MESSAGES[Math.floor(Math.random() * config.GOODBYE_MESSAGES.length)];
+}
+
 function goodbye(member) {
-  goodbyeChannel.send(`${member} has left the server, cya nerd :^)`);
+  goodbyeChannel.send(`${member} has left the server. ${getRandomGoodbye()}`);
 }
 
 //////////////////// Register handlers ////////////////////
