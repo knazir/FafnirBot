@@ -14,7 +14,7 @@ module.exports = {
   TEST_CHANNEL_ID: "413615322705166338",
 
   // welcome and goodbye
-  WELCOME_MESSAGE: "Please tag Eagle or one of the online Fafnir members and tell us your IGN. " +
+  WELCOME_MESSAGE: "Please tag one of the online Fafnir members or Eagle and tell us your IGN. " +
   "**Failure to complete this instruction will result in a kick from the server!**",
   GOODBYE_MESSAGES: ["Cya nerd. :^)", "Later loser.", "Don't let the door hit you on the way out!", "Bye."],
 
