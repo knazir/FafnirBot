@@ -1,4 +1,7 @@
 module.exports = {
+  // database
+  DATABASE_NAME: "bot-db",
+
   // commands
   COMMAND_PREFIX: "!",
   OPTION_PREFIX: "--",

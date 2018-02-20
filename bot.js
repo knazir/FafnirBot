@@ -8,7 +8,20 @@ const config = require("./config.js");
 
 const bot = new Discord.Client();
 
-//////////////////// Auth ////////////////////
+//////////////////// Database /////////////////////
+
+const MongoClient = require("mongodb").MongoClient;
+const ObjectID = require("mongodb").ObjectID;
+let warnings = null;
+let db = null;
+
+async function connectToDb() {
+  const MONGO_URL = `mongodb://localhost:27017/${config.DATABASE_NAME}`;
+  db = await MongoClient.connect(process.env.MONGODB_URI || MONGO_URL);
+  // warnings = db.collection("warnings");
+}
+
+//////////////////// Auth /////////////////////////
 
 const credentials = Object.assign(require('./google-auth.json'), {
   private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
@@ -21,13 +34,13 @@ if (process.env.NODE_ENV !== "production") {
 
 const bossCarrySheet = new GoogleSpreadsheet(config.BOSS_CARRY_SHEET_ID);
 
-//////////////////// Channels ////////////////////
+//////////////////// Channels /////////////////////
 
 let welcomeChannel;
 let goodbyeChannel;
 let testChannel;
 
-//////////////////// Generic helpers ////////////////////
+//////////////////// Generic helpers //////////////
 
 function rowToObject(row, mapping) {
   const keys = Object.keys(mapping);
@@ -38,7 +51,11 @@ function rowToObject(row, mapping) {
   return result;
 }
 
-//////////////////// Boss carries ////////////////////
+function isAdmin(user) {
+  return user.roles.find("name", "Fafnir") || user.roles.find("name", "Discord Admin");
+}
+
+//////////////////// Boss carries ////////////////
 
 function getBossCaryRows(rawRows, limit) {
   const rows = rawRows.map(row => {
@@ -152,7 +169,7 @@ function test(msg) {
 function handleBossCarries(msg) {
   const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
   const command = tokens[0];
-  if (command === "help") {
+  if (!command || command === "help") {
     msg.reply(`usage: ${config.COMMAND_PREFIX}carry list | bossnames | sheet | help`)
   } else if (command === "list") {
     showBossCarryList(msg);
@@ -160,6 +177,26 @@ function handleBossCarries(msg) {
     showBossNameList(msg);
   } else if (command === "sheet") {
     showBossSpreadsheet(msg);
+  }
+}
+
+//////////////////// Warning system //////////////
+
+function warn(msg) {
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ").slice(1);
+  if (tokens.length === 0) return msg.reply("Please specify a user to warn.");
+  const user = tokens[0];
+  msg.channel.send(`User to warn: ${user}`);
+}
+
+//////////////////// Chat management /////////////
+
+async function purge(msg) {
+  const limit = Number(msg.content.substring(msg.content.indexOf(" ") + 1).split(" ")[0]) + 1;
+  if (!limit) return msg.reply("Please specify the number of messages to purge.");
+  if (isAdmin(msg.member)) {
+    const messages = await msg.channel.fetchMessages({ limit });
+    msg.channel.bulkDelete(messages);
   }
 }
 
@@ -182,6 +219,10 @@ function handleCommand(msg) {
     msg.reply(`pong! I am currently up and running in ${process.env.NODE_ENV} mode.`);
   } else if (command === "carry") {
     handleBossCarries(msg);
+  } else if (command === "warn") {
+    warn(msg);
+  } else if (command === "purge") {
+    purge(msg);
   }
 }
 
@@ -205,14 +246,19 @@ function getRandomGoodbye() {
 }
 
 function goodbye(member) {
-  goodbyeChannel.send(`${member} has left the server. ${getRandomGoodbye()}`);
+  const staticUserInfo = `${member.username}#${member.discriminator}`;
+  goodbyeChannel.send(`${staticUserInfo} (${member}) has left the server. ${getRandomGoodbye()}`);
 }
 
-//////////////////// Register handlers ////////////////////
+//////////////////// Run bot ////////////////////
 
-bot.on("ready", ready);
-bot.on("message", handleMessage);
-bot.on("guildMemberAdd", welcome);
-bot.on("guildMemberRemove", goodbye);
+async function main() {
+  await connectToDb();
+  bot.on("ready", ready);
+  bot.on("message", handleMessage);
+  bot.on("guildMemberAdd", welcome);
+  bot.on("guildMemberRemove", goodbye);
+  bot.login(process.env.DISCORD_TOKEN);
+}
 
-bot.login(process.env.DISCORD_TOKEN);
+main();
