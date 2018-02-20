@@ -55,6 +55,12 @@ function isAdmin(user) {
   return user.roles.find("name", "Fafnir") || user.roles.find("name", "Discord Admin");
 }
 
+//////////////////// Logging /////////////////////
+
+function log(user, action, time = new Date()) {
+  console.log(`${user.username}: ${action} @ ${time.toString}`);
+}
+
 //////////////////// Boss carries ////////////////
 
 function getBossCaryRows(rawRows, limit) {
@@ -197,6 +203,7 @@ async function purge(msg) {
   if (isAdmin(msg.member)) {
     const messages = await msg.channel.fetchMessages({ limit });
     msg.channel.bulkDelete(messages);
+    log(msg.user, config.LOGGING.PURGE);
   }
 }
 
