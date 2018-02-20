@@ -59,7 +59,7 @@ function isAdmin(user) {
 //////////////////// Logging /////////////////////
 
 function log(user, action, time = new Date()) {
-  console.log(`${user.username}: ${action} @ ${time.toString}`);
+  console.log(`${user.username}: ${action} @ ${time.toString()}`);
 }
 
 //////////////////// Boss carries ////////////////
