@@ -12,6 +12,7 @@ const bot = new Discord.Client();
 
 const MongoClient = require("mongodb").MongoClient;
 const ObjectID = require("mongodb").ObjectID;
+let logs = null;
 let warnings = null;
 let db = null;
 
@@ -19,6 +20,7 @@ async function connectToDb() {
   const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || config.DATABASE_NAME;
   const MONGODB_URI = process.env.MONGODB_URI || `mongodb://localhost:27017/${MONGODB_DB_NAME}`;
   db = await MongoClient.connect(MONGODB_URI);
+  logs = db.collection("logs");
   warnings = db.collection("warnings");
 }
 
@@ -190,7 +192,7 @@ function handleBossCarries(msg) {
 //////////////////// Warning system //////////////
 
 function warn(msg) {
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ").slice(1);
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
   if (tokens.length === 0) return msg.reply("Please specify a user to warn.");
   const user = tokens[0];
   msg.channel.send(`User to warn: ${user}`);
