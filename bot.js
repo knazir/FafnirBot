@@ -16,9 +16,9 @@ let warnings = null;
 let db = null;
 
 async function connectToDb() {
-  const MONGO_URL = `mongodb://localhost:27017/${config.DATABASE_NAME}`;
+  const MONGO_URL = `mongodb://localhost:27017/${process.env.MONGODB_DB_NAME || config.DATABASE_NAME}`;
   db = await MongoClient.connect(process.env.MONGODB_URI || MONGO_URL);
-  // warnings = db.collection("warnings");
+  warnings = db.collection("warnings");
 }
 
 //////////////////// Auth /////////////////////////
