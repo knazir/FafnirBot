@@ -204,7 +204,7 @@ async function purge(msg) {
   if (isAdmin(msg.member)) {
     const messages = await msg.channel.fetchMessages({ limit });
     msg.channel.bulkDelete(messages);
-    log(msg.user, config.LOGGING.PURGE);
+    log(msg.author, config.LOGGING.PURGE);
   }
 }
 
