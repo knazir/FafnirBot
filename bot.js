@@ -58,8 +58,8 @@ function isAdmin(user) {
 
 //////////////////// Logging /////////////////////
 
-function log(user, action, time = new Date()) {
-  console.log(`${user.username}: ${action} @ ${time.toString()}`);
+function log(user, action, description, time = new Date()) {
+  console.log(`${user.username}: ${action} (${description}) @ ${time.toString()}`);
 }
 
 //////////////////// Boss carries ////////////////
@@ -204,7 +204,7 @@ async function purge(msg) {
   if (isAdmin(msg.member)) {
     const messages = await msg.channel.fetchMessages({ limit });
     msg.channel.bulkDelete(messages);
-    log(msg.author, config.LOGGING.PURGE);
+    log(msg.author, config.LOGGING.PURGE, msg.content);
   }
 }
 
