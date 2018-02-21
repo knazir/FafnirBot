@@ -56,5 +56,5 @@ module.exports = {
   // misc
   STATUS: "online",
   ACTIVITY_MESSAGE: "Fafnir #1",
-  USER_ID_REGEX: /<@[0-9]+>/
+  USER_ID_REGEX: /<@!*[0-9]+>/
 };
