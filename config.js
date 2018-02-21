@@ -15,6 +15,9 @@ module.exports = {
   // media
   BG_IMG_URL: "https://i.imgur.com/dL7979f.png",
 
+  // warnings
+  MAX_WARNINGS: 3,
+
   // roles
 
   // channels
@@ -52,5 +55,6 @@ module.exports = {
 
   // misc
   STATUS: "online",
-  ACTIVITY_MESSAGE: "Fafnir #1"
+  ACTIVITY_MESSAGE: "Fafnir #1",
+  USER_ID_REGEX: /<@[0-9]+>/
 };

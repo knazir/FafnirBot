@@ -58,6 +58,10 @@ function isAdmin(user) {
   return user.roles.find("name", "Fafnir") || user.roles.find("name", "Discord Admin");
 }
 
+function isValidUserTag(tag) {
+  return config.USER_ID_REGEX.test(tag.trim());
+}
+
 //////////////////// Logging /////////////////////
 
 function log(user, action, description, time = new Date()) {
@@ -191,23 +195,148 @@ function handleBossCarries(msg) {
 
 //////////////////// Warning system //////////////
 
-function warn(msg) {
+function getMuteLimitText() {
+  return `You will be muted after ${config.MAX_WARNINGS} warnings.`;
+}
+
+async function muteUser(msg, username) {
+  const userId = username.substring(username.indexOf("@") + 1, username.length - 1);
+  const user = msg.guild.members.get(userId);
+  await user.addRole(msg.guild.roles.find("name", "Muted"));
+  msg.channel.send(`${username}, you are now muted.`);
+}
+
+async function unmuteUser(msg, username) {
+  const userId = username.substring(username.indexOf("@") + 1, username.length - 1);
+  const user = msg.guild.members.get(userId);
+  await user.removeRole(msg.guild.roles.find("name", "Muted"));
+  msg.channel.send(`${username}, you have been unmuted.`);
+}
+
+async function updateWarning(msg, username, note = "") {
+  const existingWarning = await warnings.findOne({ username });
+  let count;
+  if (existingWarning) {
+    count = existingWarning.count + 1;
+    if (count > config.MAX_WARNINGS) return msg.channel.send("This user is already muted and cannot be warned.");
+    await warnings.updateOne({ username }, {
+      username: username,
+      count: count,
+      note: note ? `${existingWarning.note}\n${note}` : existingWarning.note
+    });
+  } else {
+    count = 1;
+    await warnings.insertOne({
+      username: username,
+      count: count,
+      note: note ? `${note}\n` : ""
+    });
+  }
+
+  if (count === 1) {
+    msg.channel.send(`${username}, you have been warned. ${getMuteLimitText()}`)
+  } else if (count !== config.MAX_WARNINGS) {
+    msg.channel.send(`${username}, you now have ${count} warnings. ${getMuteLimitText()}`);
+  } else {
+    muteUser(msg, username);
+  }
+}
+
+async function warn(msg) {
+  if (!isAdmin(msg.member)) return;
   const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
   if (tokens.length === 0) return msg.reply("Please specify a user to warn.");
-  const user = tokens[0];
-  msg.channel.send(`User to warn: ${user}`);
+  const username = tokens[0];
+  if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to warn them.");
+  const note = tokens.slice(1).join(" ");
+  await updateWarning(msg, username.toLowerCase(), note);
+}
+
+async function warnstatus(msg) {
+  if (!isAdmin(msg.member)) return;
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  if (tokens.length === 0) return msg.reply("Please specify a user to warn.");
+  const username = tokens[0];
+  if (!isValidUserTag(username)) return msg.reply("Please tag the user using @username to warn them.");
+  const existingWarning = await warnings.findOne({ username });
+  if (!existingWarning) return msg.reply("That user currently has no warnings.");
+  const { count, note } = existingWarning;
+  const notes = note.split("\n").filter(s => s).map(s => `* ${s.trim()}`);
+  const noteStr = `\`\`\`${notes.join("\n")}\`\`\``;
+  msg.channel.send(`${username} has ${count} warnings. These are the notes I found:\n${noteStr}`);
+}
+
+async function unwarn(msg) {
+  if (!isAdmin(msg.member)) return;
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  if (tokens.length === 0) return msg.reply("Please specify a user to unwarn.");
+  const username = tokens[0];
+  if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to unwarn them.");
+
+  const existingWarning = await warnings.findOne({ username });
+  if (existingWarning) {
+    if (existingWarning.count === 0) {
+      await warnings.deleteOne({ username });
+      msg.channel.send(`${username}, you are no longer warned.`);
+    } else {
+      const newCount = existingWarning.count - 1;
+      await warnings.updateOne({ username }, {
+        username: username,
+        count: newCount,
+        note: `${existingWarning.note}\nManually muted by ${msg.author}`
+      });
+      if (newCount === config.MAX_WARNINGS - 1) unmuteUser(msg, username);
+      msg.channel.send(`${username}, you now have ${newCount} warnings. ${getMuteLimitText()}`);
+    }
+  } else {
+    msg.channel.send("That user does not have any warnings.");
+  }
+}
+
+async function mute(msg) {
+  if (!isAdmin(msg.member)) return;
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  if (tokens.length === 0) return msg.reply("Please specify a user to mute.");
+  const username = tokens[0];
+  if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to mute them.");
+  const existingWarning = await warnings.findOne({ username });
+  if (existingWarning) {
+    await warnings.updateOne({ username }, {
+      username: username,
+      count: config.MAX_WARNINGS,
+      note: `${existingWarning.note}\nManually muted by ${msg.author}`
+    });
+  } else {
+    await warnings.insertOne({
+      username: username,
+      count: config.MAX_WARNINGS,
+      note: `Manually muted by ${msg.author}`
+    });
+  }
+  muteUser(msg, username);
+}
+
+async function unmute(msg) {
+  if (!isAdmin(msg.member)) return;
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  if (tokens.length === 0) return msg.reply("Please specify a user to unmute.");
+  const username = tokens[0];
+  if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to unmute them.");
+  const existingWarning = await warnings.findOne({ username });
+  if (!existingWarning) return msg.channel.send("That user was not muted.");
+  await warnings.deleteOne({ username });
+  unmuteUser(msg, username);
 }
 
 //////////////////// Chat management /////////////
 
 async function purge(msg) {
+  if (!isAdmin(msg.member)) return;
   const limit = Number(msg.content.substring(msg.content.indexOf(" ") + 1).split(" ")[0]) + 1;
   if (!limit) return msg.reply("Please specify the number of messages to purge.");
-  if (isAdmin(msg.member)) {
-    const messages = await msg.channel.fetchMessages({ limit });
-    msg.channel.bulkDelete(messages);
-    log(msg.author, config.LOGGING.PURGE, msg.content);
-  }
+  const messages = await msg.channel.fetchMessages({ limit });
+  msg.channel.bulkDelete(messages);
+  log(msg.author, config.LOGGING.PURGE, msg.content);
 }
 
 //////////////////// Handlers ////////////////////
@@ -231,6 +360,14 @@ function handleCommand(msg) {
     handleBossCarries(msg);
   } else if (command === "warn") {
     warn(msg);
+  } else if (command === "warnstatus") {
+    warnstatus(msg);
+  } else if (command === "unwarn") {
+    unwarn(msg);
+  } else if (command === "mute") {
+    mute(msg);
+  } else if (command === "unmute") {
+    unmute(msg);
   } else if (command === "purge") {
     purge(msg);
   }
