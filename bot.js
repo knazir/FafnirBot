@@ -175,7 +175,7 @@ function test(msg) {
   if (whichTest === "welcome") {
     welcome(msg.author);
   } else if (whichTest === "goodbye") {
-    goodbye(msg.author);
+    goodbye(msg.user);
   }
 }
 
