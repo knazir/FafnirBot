@@ -394,7 +394,8 @@ function getRandomGoodbye() {
 
 function goodbye(member) {
   const staticUserInfo = `${member.username}#${member.discriminator}`;
-  goodbyeChannel.send(`${member} has left the server. ${getRandomGoodbye()}`);
+  const memberTag = member.toString().replace("!", "");
+  goodbyeChannel.send(`${memberTag} has left the server. ${getRandomGoodbye()}`);
 }
 
 //////////////////// Run bot ////////////////////
