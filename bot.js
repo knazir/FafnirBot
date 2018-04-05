@@ -100,7 +100,7 @@ function setConfigVar(key, value, msg) {
 function resetConfigVar(key, msg) {
   if (!key) return msg.reply(`To reset an option, please use \`!config ${key} <name>\``);
   config[key] = originalConfig[key];
-  msg.reply(`Successfully reset option ${key} to original value ${config[key]}`);
+  msg.reply(`Successfully reset option ${key} to original value ${originalConfig[key]}`);
 }
 
 function getConfigVar(key, msg) {
