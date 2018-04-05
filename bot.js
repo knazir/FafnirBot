@@ -55,7 +55,10 @@ function rowToObject(row, mapping) {
 }
 
 function isAdmin(user) {
-  return user.roles.find("name", "Fafnir") || user.roles.find("name", "Discord Admin");
+  for (const role of config.ADMIN_ROLES) {
+    if (user.roles.find("name", role)) return true;
+  }
+  return false;
 }
 
 function isValidUserTag(tag) {
@@ -66,6 +69,13 @@ function isValidUserTag(tag) {
 
 function log(user, action, description, time = new Date()) {
   console.log(`${user.username}: ${action} (${description}) @ ${time.toString()}`);
+}
+
+//////////////////// Bot management //////////////
+
+function configBot(msg) {
+  if (!isAdmin(msg.member)) return;
+  msg.reply(`Config message; ${msg}`);
 }
 
 //////////////////// Boss carries ////////////////
@@ -356,6 +366,8 @@ function handleCommand(msg) {
     test(msg);
   } else if (command === "ping") {
     msg.reply(`pong! I am currently up and running in ${process.env.NODE_ENV} mode.`);
+  } else if (command === "config") {
+    configBot(msg);
   } else if (command === "carry") {
     handleBossCarries(msg);
   } else if (command === "warn") {
@@ -382,8 +394,8 @@ function handleMessage(msg) {
 function welcome(member) {
   const welcomeEmbed = new Discord.RichEmbed()
     .setColor(2215814)
-    .addField("Welcome to Fafnir!", config.WELCOME_MESSAGE)
-    .setImage(config.BG_IMG_URL);
+    .addField(`Welcome to ${config.GUILD_NAME}!`, config.WELCOME_MESSAGE);
+  if (config.WELCOME_BG_IMG_URL) welcomeEmbed.setImage(config.WELCOME_BG_IMG_URL);
   welcomeChannel.send(`Hi ${member}!`);
   welcomeChannel.send(welcomeEmbed);
 }

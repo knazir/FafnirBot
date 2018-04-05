@@ -1,7 +1,7 @@
 {
-  "name": "fafnirbot",
+  "name": "maplebuildbot",
   "version": "1.0.0",
-  "description": "A Discord bot for the Fafnir guild on MapleStory's Reboot server",
+  "description": "A generic Discord bot for MapleStory's Reboot guilds",
   "main": "bot.js",
   "scripts": {
     "start": "nodemon bot.js",
@@ -10,20 +10,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/knazir/FafnirBot.git"
+    "url": "git+https://github.com/knazir/MapleGuildBot.git"
   },
   "keywords": [
     "maplestory",
     "discord",
     "bot",
-    "fafnir"
+    "guild"
   ],
   "author": "Kashif Nazir (knazir)",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/knazir/FafnirBot/issues"
+    "url": "https://github.com/knazir/MapleGuildBot/issues"
   },
-  "homepage": "https://github.com/knazir/FafnirBot#readme",
+  "homepage": "https://github.com/knazir/MapleGuildBot#readme",
   "dependencies": {
     "discord.js": "^11.3.0",
     "dotenv": "^5.0.0",

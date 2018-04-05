@@ -1,4 +1,9 @@
-module.exports = {
+const GUILD_NAME = "Cleanse";
+
+const config = {
+  // guild
+  GUILD_NAME: GUILD_NAME,
+
   // database
   DATABASE_NAME: "bot-db",
 
@@ -13,12 +18,13 @@ module.exports = {
   },
 
   // media
-  BG_IMG_URL: "https://i.imgur.com/dL7979f.png",
+  WELCOME_BG_IMG_URL: null,
 
   // warnings
   MAX_WARNINGS: 3,
 
   // roles
+  ADMIN_ROLES: ["Mistress", "Royalty", "Discord Admin"],
 
   // channels
   WELCOME_CHANNEL_ID: "398691402139172864",
@@ -26,7 +32,7 @@ module.exports = {
   TEST_CHANNEL_ID: "413615322705166338",
 
   // welcome and goodbye
-  WELCOME_MESSAGE: "Please tag one of the online Fafnir members or Eagle and tell us your IGN. " +
+  WELCOME_MESSAGE: `Please tag one of the online ${GUILD_NAME} members and tell us your IGN. ` +
   "**Failure to complete this instruction will result in a kick from the server!**",
   GOODBYE_MESSAGES: ["Cya nerd. :^)", "Later loser.", "Don't let the door hit you on the way out!", "Bye."],
 
@@ -55,6 +61,8 @@ module.exports = {
 
   // misc
   STATUS: "online",
-  ACTIVITY_MESSAGE: "Fafnir #1",
+  ACTIVITY_MESSAGE: `${GUILD_NAME} #1`,
   USER_ID_REGEX: /<@[^>]+>/
 };
+
+module.exports = config;
