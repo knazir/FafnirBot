@@ -32,8 +32,8 @@ const config = {
   TEST_CHANNEL_ID: "413615322705166338",
 
   // welcome and goodbye
-  WELCOME_MESSAGE: `Please tag one of the online ${GUILD_NAME} members and tell us your IGN. ` +
-  "**Failure to complete this instruction will result in a kick from the server!**",
+  WELCOME_MESSAGE: "Welcome to **Cleanse**! Please tag one of the _Mistress or Royalty_ members with your in-game " +
+  "name using the **@** symbol to receive access!",
   GOODBYE_MESSAGES: ["Cya nerd. :^)", "Later loser.", "Don't let the door hit you on the way out!", "Bye."],
 
   // boss carries
