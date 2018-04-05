@@ -4,7 +4,8 @@ require("dotenv").config();
 const fs = require("fs");
 const Discord = require("discord.js");
 const GoogleSpreadsheet = require('google-spreadsheet');
-const config = require("./config.js");
+let config = require("./config.js");
+const originalConfig = config;
 
 const bot = new Discord.Client();
 
@@ -61,8 +62,17 @@ function isAdmin(user) {
   return false;
 }
 
+function doIfAdmin(msg, callback) {
+  if (isAdmin(msg.member)) callback();
+}
+
 function isValidUserTag(tag) {
   return config.USER_ID_REGEX.test(tag.trim());
+}
+
+function tokenize(msg, sliceIndex) {
+  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  return sliceIndex ? tokens.slice(sliceIndex) : tokens;
 }
 
 //////////////////// Logging /////////////////////
@@ -73,9 +83,59 @@ function log(user, action, description, time = new Date()) {
 
 //////////////////// Bot management //////////////
 
+function setConfigVar(key, value, msg) {
+  // 0 = "set", 1 = key, 2 = value
+  if (!key || !value) return msg.reply("To set an option, please use `!config set <name> <value>`");
+  const currentValue = config[key];
+  if (typeof currentValue === "object") {
+    return msg.reply("Cannot override the value for complex config variables (yet!)");
+  } else if (typeof currentValue === Number) {
+    config[key] = Number(value);
+  } else {
+    config[key] = value;
+  }
+  msg.reply(`Successfully set option ${key} to ${value}`);
+}
+
+function resetConfigVar(key, msg) {
+  if (!key) return msg.reply(`To reset an option, please use \`!config ${key} <name>\``);
+  config[key] = originalConfig[key];
+  msg.reply(`Successfully reset option ${key} to original value ${config[key]}`);
+}
+
+function getConfigVar(key, msg) {
+  if (!key) return msg.reply("To get an option's value, plaese use `!config get <name>`");
+  let value = config[key];
+  if (!value) return msg.reply(`Option ${key} is not currently set`);
+  if (typeof value === "string") value = `"${value}"`;
+  msg.reply(`Option ${key} is currently set to ${value}`);
+}
+
+function listConfigOptions(msg) {
+  const options = Object.keys(config).filter(key => typeof config[key] !== "object");
+  const optionsListEmbed = new Discord.RichEmbed().setColor(2215814);
+  options.forEach(option => optionsListEmbed.addField(option, config[option]));
+  msg.reply("Here is a list of currently set options:");
+  msg.channel.send(optionsListEmbed);
+}
+
 function configBot(msg) {
-  if (!isAdmin(msg.member)) return;
-  msg.reply(`Config message; ${msg}`);
+  let tokens = tokenize(msg);
+  if (tokens[0] === "set") {
+    // join all space-separated words into one string for value value
+    const key = tokens[1];
+    let value = tokens[2];
+    if (tokens.length > 3) value = tokens.slice(2).join(" ");
+    setConfigVar(key, value, msg);
+  } else if (tokens[0] === "reset") {
+    resetConfigVar(tokens[1], msg);
+  } else if (tokens[0] === "get") {
+    getConfigVar(tokens[1], msg);
+  } else if (tokens[0] === "options") {
+    listConfigOptions(msg);
+  } else {
+    msg.reply("Usage: `!config set <name> <value> | reset <name> | get <name> | options`");
+  }
 }
 
 //////////////////// Boss carries ////////////////
@@ -94,7 +154,7 @@ function getBossesNeeded(row) {
 }
 
 function showBossCarriesByName(msg, limit) {
-  bossCarrySheet.useServiceAccountAuth(credentials, (err) => {
+  bossCarrySheet.useServiceAccountAuth(credentials, () => {
     bossCarrySheet.getRows(1, (err, rawRows) => {
       const rows = getBossCaryRows(rawRows, limit);
       const carryListEmbed = new Discord.RichEmbed().setColor(3447003);
@@ -107,7 +167,7 @@ function showBossCarriesByName(msg, limit) {
 }
 
 function showBossCarriesByBoss(msg, bosses) {
-  bossCarrySheet.useServiceAccountAuth(credentials, (err) => {
+  bossCarrySheet.useServiceAccountAuth(credentials, () => {
     bossCarrySheet.getRows(1, (err, rawRows) => {
       const result = {};
 
@@ -151,7 +211,7 @@ function showBossCarriesByBoss(msg, bosses) {
 
 // Assumes spreadsheet ordering is priority (does not sort by date)
 function showBossCarryList(msg) {
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ").slice(1);
+  const tokens = tokenize(msg, 1);
   if (tokens[0] === "help") {
     msg.reply(`usage: ${config.COMMAND_PREFIX}carry list <boss name> | <number to show> | help`)
   } else if (tokens[0] && !Number(tokens[0])) {
@@ -190,7 +250,7 @@ function test(msg) {
 }
 
 function handleBossCarries(msg) {
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  const tokens = tokenize(msg);
   const command = tokens[0];
   if (!command || command === "help") {
     msg.reply(`usage: ${config.COMMAND_PREFIX}carry list | bossnames | sheet | help`)
@@ -253,8 +313,7 @@ async function updateWarning(msg, username, note = "") {
 }
 
 async function warn(msg) {
-  if (!isAdmin(msg.member)) return;
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  const tokens = tokenize(msg);
   if (tokens.length === 0) return msg.reply("Please specify a user to warn.");
   const username = tokens[0];
   if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to warn them.");
@@ -262,9 +321,8 @@ async function warn(msg) {
   await updateWarning(msg, username.toLowerCase(), note);
 }
 
-async function warnstatus(msg) {
-  if (!isAdmin(msg.member)) return;
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+async function warnStatus(msg) {
+  const tokens = tokenize(msg);
   if (tokens.length === 0) return msg.reply("Please specify a user to warn.");
   const username = tokens[0];
   if (!isValidUserTag(username)) return msg.reply("Please tag the user using @username to warn them.");
@@ -278,7 +336,7 @@ async function warnstatus(msg) {
 
 async function unwarn(msg) {
   if (!isAdmin(msg.member)) return;
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  const tokens = tokenize(msg);
   if (tokens.length === 0) return msg.reply("Please specify a user to unwarn.");
   const username = tokens[0];
   if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to unwarn them.");
@@ -305,7 +363,7 @@ async function unwarn(msg) {
 
 async function mute(msg) {
   if (!isAdmin(msg.member)) return;
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  const tokens = tokenize(msg);
   if (tokens.length === 0) return msg.reply("Please specify a user to mute.");
   const username = tokens[0];
   if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to mute them.");
@@ -328,7 +386,7 @@ async function mute(msg) {
 
 async function unmute(msg) {
   if (!isAdmin(msg.member)) return;
-  const tokens = msg.content.substring(msg.content.indexOf(" ") + 1).split(" ");
+  const tokens = tokenize(msg);
   if (tokens.length === 0) return msg.reply("Please specify a user to unmute.");
   const username = tokens[0];
   if(!isValidUserTag(username)) return msg.reply("Please tag the user using @username to unmute them.");
@@ -342,7 +400,7 @@ async function unmute(msg) {
 
 async function purge(msg) {
   if (!isAdmin(msg.member)) return;
-  const limit = Number(msg.content.substring(msg.content.indexOf(" ") + 1).split(" ")[0]) + 1;
+  const limit = Number(tokenize(msg)[0]) + 1;
   if (!limit) return msg.reply("Please specify the number of messages to purge.");
   const messages = await msg.channel.fetchMessages({ limit });
   msg.channel.bulkDelete(messages);
@@ -359,21 +417,17 @@ function ready() {
   console.log(`Logged in as ${bot.user.tag}!`);
 }
 
-// TODO: Figure out better way to handle test commands
-function handleCommand(msg) {
-  const command = msg.content.substring(config.COMMAND_PREFIX.length).split(" ")[0];
-  if (command === "test") {
-    test(msg);
-  } else if (command === "ping") {
-    msg.reply(`pong! I am currently up and running in ${process.env.NODE_ENV} mode.`);
-  } else if (command === "config") {
+function handleAdminCommand(command, msg) {
+  if (command === "config") {
     configBot(msg);
-  } else if (command === "carry") {
-    handleBossCarries(msg);
+  } else if (command === "reset") {
+    resetBot(msg);
+  } else if (command === "restart") {
+    restartBot(msg);
   } else if (command === "warn") {
     warn(msg);
   } else if (command === "warnstatus") {
-    warnstatus(msg);
+    warnStatus(msg);
   } else if (command === "unwarn") {
     unwarn(msg);
   } else if (command === "mute") {
@@ -382,6 +436,20 @@ function handleCommand(msg) {
     unmute(msg);
   } else if (command === "purge") {
     purge(msg);
+  }
+}
+
+// TODO: Figure out better way to handle test commands
+function handleCommand(msg) {
+  const command = msg.content.substring(config.COMMAND_PREFIX.length).split(" ")[0];
+  if (command === "test") {
+    test(msg);
+  } else if (command === "ping") {
+    msg.reply(`pong! I am currently up and running in ${process.env.NODE_ENV} mode.`);
+  } else if (command === "carry") {
+    handleBossCarries(msg);
+  } else if (isAdmin(msg.member)) {
+    handleAdminCommand(command, msg);
   }
 }
 
@@ -411,6 +479,24 @@ function goodbye(member) {
 }
 
 //////////////////// Run bot ////////////////////
+
+async function resetBot(msg) {
+  config = originalConfig;
+  msg.channel.send("Resetting bot configuration...");
+  await restart();
+  msg.channel.send("Successfully reset!");
+}
+
+async function restartBot(msg) {
+  msg.channel.send("Restarting...");
+  await restart();
+  msg.channel.send("Successfully restarted!");
+}
+
+async function restart() {
+  await bot.destroy();
+  await bot.login(process.env.DISCORD_TOKEN);
+}
 
 async function main() {
   await connectToDb();
